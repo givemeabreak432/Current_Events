@@ -7,9 +7,9 @@
 //SEND
 
 #define READPIN 26
-double mVperAmp = 185; // use 100 for 20A Module and 66 for 30A Module
+double mVperAmp = .185; // use 100 for 20A Module and 66 for 30A Module
 double RawValue= 0;
-double ACSoffset = 2500;
+double ACSoffset = 2.5;
 double Voltage = 0;
 double Amps = 0;
 
@@ -34,14 +34,14 @@ void setup() {
 void loop()
 {
   RawValue = analogRead(READPIN);
-  Voltage = (RawValue / 1024.0); // Gets you mV
+  Voltage = RawValue / 1024.0; // Gets you V
   Amps = ((Voltage - ACSoffset) / mVperAmp);
 
   // Serial.print("Amps = "); // shows the voltage measured
   // Serial.println(Amps,2); // the '2' after voltage allows you to display 2 digits after decimal point
 
   // printBuffer("Amps = ");
-  display.setLogBuffer(2, 20);
+  display.setLogBuffer(2, 15);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.print("Voltage : ");
   display.println(Voltage);
