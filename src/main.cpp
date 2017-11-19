@@ -26,7 +26,7 @@ SSD1306  display(0x3c, 21, 22);
 void setup() {
 
   Serial.begin(115200);
-
+  while(!Serial);
 
   WiFi.begin(ssid, password);
 
@@ -45,22 +45,22 @@ void setup() {
 
 void loop()
 {
-  // RawValue = analogRead(READPIN);
-  // Voltage = RawValue / 1024.0; // Gets you V
-  // Amps = ((Voltage - ACSoffset) / mVperAmp);
-  //
-  // // Serial.print("Amps = "); // shows the voltage measured
-  // // Serial.println(Amps,2); // the '2' after voltage allows you to display 2 digits after decimal point
-  //
-  // // printBuffer("Amps = ");
-  // display.setLogBuffer(2, 15);
-  // display.setTextAlignment(TEXT_ALIGN_CENTER);
-  // display.print("Voltage : ");
-  // display.println(Voltage);
-  // display.print("Amps : ");
-  // display.println(Amps);
-  // display.drawLogBuffer(0, 0);
-  // display.display();
-  // delay(1000);
-  // display.clear();
+  RawValue = analogRead(READPIN);
+  Voltage = RawValue / 1024.0; // Gets you V
+  Amps = ((Voltage - ACSoffset) / mVperAmp);
+
+  // Serial.print("Amps = "); // shows the voltage measured
+  // Serial.println(Amps,2); // the '2' after voltage allows you to display 2 digits after decimal point
+
+  // printBuffer("Amps = ");
+  display.setLogBuffer(2, 15);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.print("Voltage : ");
+  display.println(Voltage);
+  display.print("Amps : ");
+  display.println(Amps);
+  display.drawLogBuffer(0, 0);
+  display.display();
+  delay(1000);
+  display.clear();
 }
