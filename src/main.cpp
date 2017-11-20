@@ -115,7 +115,7 @@ void loop()
   //delays are built into averageAmp()
   Amps = averageAmp(readInterval);
 
-  request_successful = makePostRequest(Amps);
+  makePostRequest(Amps);
 
   // Serial.print("Amps = "); // shows the voltage measured
   // Serial.println(Amps,2); // the '2' after voltage allows you to display 2 digits after decimal point
