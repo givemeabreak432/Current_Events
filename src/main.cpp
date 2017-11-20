@@ -33,12 +33,13 @@ double readAmp(){
 }
 
 //reads the Amps ever 100 ms for readPeriod milliseconds, then averages them
-double averageAmp(int readPeriod){}
-  int numReadings = readPeriod/100;
+double averageAmp(int readPeriod, int interval = 100){
+  int numReadings = readPeriod/interval;
   double readingsTotal;
   int i = 0;
 
-  for(i=0; i < numReadings; i++;){
+
+  for(i=0; i < numReadings; i = i + 1){
     readingsTotal += readAmp();
     delay(100);
   }
@@ -59,12 +60,7 @@ void displayUpdate(){
   display.display();
 }
 
-
-void setup() {
-
-  Serial.begin(115200);
-  while(!Serial);
-
+void startWifi(){
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -73,6 +69,14 @@ void setup() {
   }
 
   Serial.println("Connected to the WiFi network");
+}
+
+void setup() {
+
+  Serial.begin(115200);
+  while(!Serial);
+
+  startWifi();
 
   display.init();
   display.flipScreenVertically();
