@@ -15,7 +15,6 @@ unsigned int AmpReadCounter = 0;
 #define ONBOARD_BUTTON 0
 double mVperAmp = .185; // use 100 for 20A Module and 66 for 30A Module
 double ACSoffset = 2.52;
-int readInterval = 1000;
 double RawValue= 0.0;
 double Voltage = 0.0;
 double Amps = 0.0;
