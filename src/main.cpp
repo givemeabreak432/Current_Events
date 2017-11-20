@@ -6,6 +6,7 @@
 #include <SSD1306.h> // alias for `#include "SSD1306Wire.h"`
 
 #include <WiFi.h>
+#include <HTTPClient.h>
 
 //SEND
 
@@ -60,6 +61,31 @@ void displayUpdate(){
   display.display();
 }
 
+void makePostRequest(double amps) {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient client;
+
+    client.begin(String url);
+    client.addHeader("Content-Type", "text/plain");
+
+    int httpResponseCode = client.POST(amps, size_t size);
+
+    if (httpResponseCode > 0) {
+      String response = client.getString();
+
+      Serial.println(httpResponseCode);
+      Serial.println(response);
+    } else {
+      Serial.println("ERROR: POST failed...");
+      Serial.println(httpResponseCode);
+    }
+
+    client.end();
+  } else {
+    Serial.println("ERROR: WiFi connection has issues yo.");
+  }
+}
+
 void startWifi(){
   WiFi.begin(ssid, password);
 
@@ -89,22 +115,12 @@ void loop()
   //delays are built into averageAmp()
   Amps = averageAmp(readInterval);
 
+  request_successful = makePostRequest(Amps);
+
   // Serial.print("Amps = "); // shows the voltage measured
   // Serial.println(Amps,2); // the '2' after voltage allows you to display 2 digits after decimal point
 
   // printBuffer("Amps = ");
 
   displayUpdate();
-/*
-  display.setLogBuffer(2, 15);
-  display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.print("Voltage : ");
-  display.println(Voltage);
-  display.print("Amps : ");
-  display.println(Amps);
-  display.drawLogBuffer(0, 0);
-  display.display();
-  delay(1000);
-  display.clear();
-  */
 }
