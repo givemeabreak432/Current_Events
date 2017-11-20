@@ -7,7 +7,8 @@
 
 #include <WiFi.h>
 
-//SEND
+//TODO Scope variables better
+
 #define AMP_READS_BETWEEN_UPDATE 10000
 unsigned int AmpReadCounter = 0;
 
@@ -21,30 +22,29 @@ double Voltage = 0.0;
 double Amps = 0.0;
 double AmpOffset = 0.0;
 
-
-
-
+// Initialize required variables for internet connection.
 const char* ssid = "Do_Not_Connect";
 const char* password = "";
 
 // Initialize the OLED display using Wire library
 SSD1306  display(0x3c, 21, 22);
-// SH1106 display(0x3c, D3, D5);
 
 //translates the raw value into a Amp reading.
 inline void readAmp(){
   RawValue = analogRead(READPIN);
-  Voltage = RawValue / (3050 / ACSoffset); //TODO: 3050 is a magic number that is roughly the value read with 0 current
+
+  //TODO: 3050 is a magic number that is roughly the value read with 0 current
+  Voltage = RawValue / (3050 / ACSoffset);
+
   //TODO: Test averaging voltage as well
   Amps = ((Amps * AMP_READS_BETWEEN_UPDATE) + ((Voltage - ACSoffset)) / mVperAmp)/(AMP_READS_BETWEEN_UPDATE + 1);
 
 }
 
-//reads the Amps ever 100 ms for readPeriod milliseconds, then averages them
-
 //clear data on screen and rewrite it.
 void displayUpdate(){
   display.clear();
+  display.setFont(ArialMT_Plain_16);
   display.setLogBuffer(2, 15);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.print("Voltage : ");
@@ -82,15 +82,9 @@ void setup() {
 
 void loop()
 {
-
   //delays are built into averageAmp()
-   readAmp();
+  readAmp();
 
-
-  // Serial.print("Amps = "); // shows the voltage measured
-  // Serial.println(Amps,2); // the '2' after voltage allows you to display 2 digits after decimal point
-
-  // printBuffer("Amps = ");
   if((AmpReadCounter % AMP_READS_BETWEEN_UPDATE) == 0) {
     if(digitalRead(ONBOARD_BUTTON) == LOW)
     {
@@ -99,16 +93,4 @@ void loop()
     displayUpdate();
   }
   AmpReadCounter++;
-/*
-  display.setLogBuffer(2, 15);
-  display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.print("Voltage : ");
-  display.println(Voltage);
-  display.print("Amps : ");
-  display.println(Amps);
-  display.drawLogBuffer(0, 0);
-  display.display();
-  delay(1000);
-  display.clear();
-  */
 }
