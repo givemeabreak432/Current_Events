@@ -7,6 +7,7 @@
 
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 
 //SEND
 #define AMP_READS_BETWEEN_UPDATE 10000
@@ -22,11 +23,8 @@ double Voltage = 0.0;
 double Amps = 0.0;
 double AmpOffset = 0.0;
 
-
-
-
 const char* ssid = "Do_Not_Connect";
-const char* password = "";
+const char* password = "ea5ntxzgrugmi5";
 
 // Initialize the OLED display using Wire library
 SSD1306  display(0x3c, 21, 22);
@@ -56,14 +54,16 @@ void displayUpdate(){
   display.display();
 }
 
-void makePostRequest(double amps) {
+void makePostRequest() {
+  Serial.println("Making POST request.");
+
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient client;
 
-    client.begin(String url);
-    client.addHeader("Content-Type", "text/plain");
+    client.begin("http://www.pateradactyl.io/log.php");
+    client.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
-    int httpResponseCode = client.POST(amps, size_t size);
+    int httpResponseCode = client.POST("test");
 
     if (httpResponseCode > 0) {
       String response = client.getString();
@@ -75,6 +75,7 @@ void makePostRequest(double amps) {
       Serial.println(httpResponseCode);
     }
 
+    Serial.println("Closing HTTP handler");
     client.end();
   } else {
     Serial.println("ERROR: WiFi connection has issues yo.");
@@ -97,23 +98,24 @@ void setup() {
   Serial.begin(115200);
   while(!Serial);
 
-  //startWifi();
+  startWifi();
 
   display.init();
   display.flipScreenVertically();
 
   pinMode(ONBOARD_BUTTON, INPUT);
   pinMode(READPIN, INPUT);
+
+  Serial.println("Setup complete...");
 }
 
 void loop()
 {
 
   //delays are built into averageAmp()
-   readAmp();
+  readAmp();
 
-
-  makePostRequest(Amps);
+  makePostRequest();
 
   // Serial.print("Amps = "); // shows the voltage measured
   // Serial.println(Amps,2); // the '2' after voltage allows you to display 2 digits after decimal point
@@ -127,16 +129,4 @@ void loop()
     displayUpdate();
   }
   AmpReadCounter++;
-/*
-  display.setLogBuffer(2, 15);
-  display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.print("Voltage : ");
-  display.println(Voltage);
-  display.print("Amps : ");
-  display.println(Amps);
-  display.drawLogBuffer(0, 0);
-  display.display();
-  delay(1000);
-  display.clear();
-  */
 }
