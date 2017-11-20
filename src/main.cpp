@@ -63,7 +63,7 @@ void makePostRequest() {
     client.begin("http://www.pateradactyl.io/log.php");
     client.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
-    int httpResponseCode = client.POST("test");
+    int httpResponseCode = client.GET();
 
     if (httpResponseCode > 0) {
       String response = client.getString();
@@ -74,12 +74,13 @@ void makePostRequest() {
       Serial.println("ERROR: POST failed...");
       Serial.println(httpResponseCode);
     }
-
-    Serial.println("Closing HTTP handler");
     client.end();
+    Serial.println("Closing HTTP handler");
   } else {
     Serial.println("ERROR: WiFi connection has issues yo.");
+    client.end();
   }
+  delay(500);
 }
 
 void startWifi(){
