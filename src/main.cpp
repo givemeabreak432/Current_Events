@@ -9,14 +9,21 @@
 #include <HTTPClient.h>
 
 //SEND
+#define AMP_READS_BETWEEN_UPDATE 10000
+unsigned int AmpReadCounter = 0;
 
 #define READPIN 26
+#define ONBOARD_BUTTON 0
 double mVperAmp = .185; // use 100 for 20A Module and 66 for 30A Module
-double ACSoffset = 2.5;
+double ACSoffset = 2.52;
 int readInterval = 1000;
 double RawValue= 0.0;
 double Voltage = 0.0;
 double Amps = 0.0;
+double AmpOffset = 0.0;
+
+
+
 
 const char* ssid = "Do_Not_Connect";
 const char* password = "";
@@ -26,27 +33,15 @@ SSD1306  display(0x3c, 21, 22);
 // SH1106 display(0x3c, D3, D5);
 
 //translates the raw value into a Amp reading.
-double readAmp(){
+inline void readAmp(){
   RawValue = analogRead(READPIN);
-  Voltage = RawValue / 1024.0; // Gets you V
-  Amps = ((Voltage - ACSoffset) / mVperAmp);
-  return Amps;
+  Voltage = RawValue / (3050 / ACSoffset); //TODO: 3050 is a magic number that is roughly the value read with 0 current
+  //TODO: Test averaging voltage as well
+  Amps = ((Amps * AMP_READS_BETWEEN_UPDATE) + ((Voltage - ACSoffset)) / mVperAmp)/(AMP_READS_BETWEEN_UPDATE + 1);
+
 }
 
 //reads the Amps ever 100 ms for readPeriod milliseconds, then averages them
-double averageAmp(int readPeriod, int interval = 100){
-  int numReadings = readPeriod/interval;
-  double readingsTotal;
-  int i = 0;
-
-
-  for(i=0; i < numReadings; i = i + 1){
-    readingsTotal += readAmp();
-    delay(100);
-  }
-
-  return (readingsTotal/numReadings);
-}
 
 //clear data on screen and rewrite it.
 void displayUpdate(){
@@ -56,7 +51,7 @@ void displayUpdate(){
   display.print("Voltage : ");
   display.println(Voltage);
   display.print("Amps : ");
-  display.println(Amps);
+  display.println(Amps - AmpOffset);
   display.drawLogBuffer(0, 0);
   display.display();
 }
@@ -102,18 +97,21 @@ void setup() {
   Serial.begin(115200);
   while(!Serial);
 
-  startWifi();
+  //startWifi();
 
   display.init();
   display.flipScreenVertically();
 
+  pinMode(ONBOARD_BUTTON, INPUT);
   pinMode(READPIN, INPUT);
 }
 
 void loop()
 {
+
   //delays are built into averageAmp()
-  Amps = averageAmp(readInterval);
+   readAmp();
+
 
   makePostRequest(Amps);
 
@@ -121,6 +119,24 @@ void loop()
   // Serial.println(Amps,2); // the '2' after voltage allows you to display 2 digits after decimal point
 
   // printBuffer("Amps = ");
-
-  displayUpdate();
+  if((AmpReadCounter % AMP_READS_BETWEEN_UPDATE) == 0) {
+    if(digitalRead(ONBOARD_BUTTON) == LOW)
+    {
+      AmpOffset = Amps;
+    }
+    displayUpdate();
+  }
+  AmpReadCounter++;
+/*
+  display.setLogBuffer(2, 15);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.print("Voltage : ");
+  display.println(Voltage);
+  display.print("Amps : ");
+  display.println(Amps);
+  display.drawLogBuffer(0, 0);
+  display.display();
+  delay(1000);
+  display.clear();
+  */
 }
