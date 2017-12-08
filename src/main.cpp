@@ -118,8 +118,8 @@ void loop()
 
   //delays are built into averageAmp()
   double aveAmp = averageAmp(&global_sensor);
-  displayUpdate(aveAmp);
-  sendData(aveAmp);
+  displayUpdate(aveAmp - AmpOffset);
+  sendData(aveAmp- AmpOffset);
 
   if(digitalRead(ONBOARD_BUTTON)==LOW){
     AmpOffset = averageAmp(&global_sensor);
