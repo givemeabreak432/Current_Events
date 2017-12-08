@@ -10,10 +10,7 @@
 //TODO Scope variables better
 
 #define AMP_READS_BETWEEN_UPDATE 10000
-unsigned int AmpReadCounter = 0;
 double AmpOffset = 0.0;
-int readInterval = 1000;
-
 
 #define READPIN 32
 #define ONBOARD_BUTTON 0
@@ -44,17 +41,22 @@ inline double readAmp(){
 
 }
 double averageAmp(){
+  double totalAmp;
+  for(int i = 0; i < AMP_READS_BETWEEN_UPDATE; i++){
+    totalAmp = totalAmp + readAmp();
+  }
 
+  return totalAmp/AMP_READS_BETWEEN_UPDATE;
 }
 
 //clear data on screen and rewrite it.
-void displayUpdate(){
+void displayUpdate(double newAmp){
   display.clear();
   display.setFont(ArialMT_Plain_16);
   display.setLogBuffer(2, 15);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.print("Amps : ");
-  display.println(averageAmp() - AmpOffset);
+  display.println(newAmp - AmpOffset);
   display.drawLogBuffer(0, 0);
   display.display();
 }
@@ -87,14 +89,10 @@ void setup() {
 void loop()
 {
   //delays are built into averageAmp()
-  readAmp();
+  displayUpdate(averageAmp());
 
-  if((AmpReadCounter % AMP_READS_BETWEEN_UPDATE) == 0) {
-    if(digitalRead(ONBOARD_BUTTON) == LOW)
-    {
-      AmpOffset = readAmp();
-    }
-    displayUpdate();
+  if(digitalRead(ONBOARD_BUTTON)==LOW){
+    AmpOffset = readAmp();
   }
-  AmpReadCounter++;
+
 }
