@@ -22,8 +22,8 @@ static double AmpOffset = 0.0;
 String data;
 
 // Initialize required variables for internet connection.
-const char* ssid = "Do_Not_Connect";
-const char* password = "ea5ntxzgrugmi5";
+const char* ssid = "Change Your Admin Creds";
+const char* password = "thistest";
 
 IPAddress server(52,41,6,176);
 
