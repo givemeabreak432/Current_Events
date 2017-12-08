@@ -77,7 +77,7 @@ void startWifi(){
 }
 
 // Takes array of tuples and sends them to server
-void sendData(char* holder_param) {
+void sendData(String holder_param) {
   startWifi();
 
   if (client.connect(server, 80)) {
