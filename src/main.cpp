@@ -19,6 +19,7 @@ static ACS712_Sensor global_sensor; //global struct to store sensor data
 #define AMP_READS_BETWEEN_UPDATE 10000
 static double AmpOffset = 0.0;
 
+String data;
 
 // Initialize required variables for internet connection.
 const char* ssid = "Do_Not_Connect";
@@ -60,6 +61,7 @@ static void displayUpdate(double newAmp){
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.print("Amps : ");
   display.println(newAmp);
+  Serial.println(newAmp);
   display.drawLogBuffer(0, 0);
   display.display();
 }
@@ -76,8 +78,9 @@ static void startWifi(){
 }
 
 // Takes array of tuples and sends them to server
-static void sendData(String holder_param) {
-  startWifi();
+static void sendData(double holder_param) {
+
+  data = "current=" + (String)holder_param;
 
   if (client.connect(server, 80)) {
     client.println("POST /post-data.php HTTP/1.1");
@@ -86,9 +89,9 @@ static void sendData(String holder_param) {
     client.println();
     client.println("Content-Type: application/x-www-form-urlencoded");
     client.print("Content-Length: ");
-    client.print(holder_param.length());
+    client.print(data.length());
     client.println();
-    client.print(holder_param);
+    client.print(data);
   }
 
   if (client.connected()) {
@@ -101,7 +104,7 @@ void setup() {
   Serial.begin(115200);
   while(!Serial);
 
-  //startWifi();
+  startWifi();
 
   display.init();
   display.flipScreenVertically();
@@ -114,7 +117,9 @@ void loop()
 {
 
   //delays are built into averageAmp()
-  displayUpdate(averageAmp(&global_sensor));
+  double aveAmp = averageAmp(&global_sensor);
+  displayUpdate(aveAmp);
+  sendData(aveAmp);
 
   if(digitalRead(ONBOARD_BUTTON)==LOW){
     AmpOffset = averageAmp(&global_sensor);
