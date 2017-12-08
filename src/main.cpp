@@ -59,7 +59,7 @@ static void displayUpdate(double newAmp){
   display.setLogBuffer(2, 15);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.print("Amps : ");
-  display.println(newAmp - AmpOffset);
+  display.println(newAmp);
   display.drawLogBuffer(0, 0);
   display.display();
 }
