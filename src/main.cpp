@@ -21,6 +21,10 @@ double AmpOffset = 0.0;
 const char* ssid = "Do_Not_Connect";
 const char* password = "ea5ntxzgrugmi5";
 
+IPAddress server(52,41,6,176);
+
+WiFiClient client;
+
 // Initialize the OLED display using Wire library
 SSD1306  display(0x3c, 21, 22);
 
@@ -70,6 +74,27 @@ void startWifi(){
   }
 
   Serial.println("Connected to the WiFi network");
+}
+
+// Takes array of tuples and sends them to server
+void sendData(char* holder_param) {
+  startWifi();
+
+  if (client.connect(server, 80)) {
+    client.println("POST /post-data.php HTTP/1.1");
+    client.print("Host: ");
+    client.print(server);
+    client.println();
+    client.println("Content-Type: application/x-www-form-urlencoded");
+    client.print("Content-Length: ");
+    client.print(holder_param.length());
+    client.println();
+    client.print(holder_param);
+  }
+
+  if (client.connected()) {
+    client.stop();
+  }
 }
 
 void setup() {
