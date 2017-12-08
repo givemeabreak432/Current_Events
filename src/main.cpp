@@ -7,15 +7,18 @@
 
 #include <WiFi.h>
 
+#include "main.h"
+
+//variables read / derived from currenst sensor
+static ACS712_Sensor global_sensor; //global struct to store sensor data
+
 //TODO Scope variables better
-
-#define AMP_READS_BETWEEN_UPDATE 10000
-double AmpOffset = 0.0;
-
 #define READPIN 32
 #define ONBOARD_BUTTON 0
 
-//ampVariables
+#define AMP_READS_BETWEEN_UPDATE 10000
+static double AmpOffset = 0.0;
+
 
 // Initialize required variables for internet connection.
 const char* ssid = "Do_Not_Connect";
@@ -29,32 +32,28 @@ WiFiClient client;
 SSD1306  display(0x3c, 21, 22);
 
 //translates the raw value into a Amp reading.
-inline double readAmp(){
-  double mVperAmp = .185; // use 100 for 20A Module and 66 for 30A Module
-  double ACSoffset = 2.52;
-
-  double rawValue = analogRead(READPIN);
-
+inline static void readSensor(ACS712_Sensor *sensor){
+  sensor->rawRead = analogRead(READPIN);
   //TODO: 3050 is a magic number that is roughly the value read with 0 current
-  double readVoltage = rawValue / (3050 / ACSoffset);
-
+  sensor->voltageRead = sensor->rawRead / (3050/ACS_OFFSET);
+  //sensor->ampsRead = ((sensor->voltageRead - ACS_OFFSET))/V_PER_AMP;
   //TODO: Test averaging voltage as well
-  //double amps = ((amps * AMP_READS_BETWEEN_UPDATE) + ((readVoltage - ACSoffset)) / mVperAmp)/(AMP_READS_BETWEEN_UPDATE + 1);
-  double amps = ((readVoltage - ACSoffset))/mVperAmp;
-  return amps;
-
 }
-double averageAmp(){
-  double totalAmp;
-  for(int i = 0; i < AMP_READS_BETWEEN_UPDATE; i++){
-    totalAmp = totalAmp + readAmp();
+
+inline static double averageAmp(ACS712_Sensor *sensor){
+  static double averageAmp;
+  for (int i = 0; i < AMP_READS_BETWEEN_UPDATE; ++i)
+  {
+    readSensor(sensor);
+    averageAmp = (((averageAmp * AMP_READS_BETWEEN_UPDATE) + (sensor->voltageRead - ACS_OFFSET) / V_PER_AMP) / (AMP_READS_BETWEEN_UPDATE + 1));
   }
 
-  return totalAmp/AMP_READS_BETWEEN_UPDATE;
+
+  return averageAmp;
 }
 
 //clear data on screen and rewrite it.
-void displayUpdate(double newAmp){
+static void displayUpdate(double newAmp){
   display.clear();
   display.setFont(ArialMT_Plain_16);
   display.setLogBuffer(2, 15);
@@ -65,7 +64,7 @@ void displayUpdate(double newAmp){
   display.display();
 }
 
-void startWifi(){
+static void startWifi(){
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -77,7 +76,7 @@ void startWifi(){
 }
 
 // Takes array of tuples and sends them to server
-void sendData(String holder_param) {
+static void sendData(String holder_param) {
   startWifi();
 
   if (client.connect(server, 80)) {
@@ -113,11 +112,12 @@ void setup() {
 
 void loop()
 {
+
   //delays are built into averageAmp()
-  displayUpdate(averageAmp());
+  displayUpdate(averageAmp(&global_sensor));
 
   if(digitalRead(ONBOARD_BUTTON)==LOW){
-    AmpOffset = readAmp();
+    AmpOffset = averageAmp(&global_sensor);
   }
 
 }
