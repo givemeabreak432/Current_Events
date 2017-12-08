@@ -56,7 +56,7 @@ void displayUpdate(double newAmp){
   display.setLogBuffer(2, 15);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.print("Amps : ");
-  display.println(newAmp - AmpOffset);
+  display.println(newAmp);
   display.drawLogBuffer(0, 0);
   display.display();
 }
@@ -89,10 +89,10 @@ void setup() {
 void loop()
 {
   //delays are built into averageAmp()
-  displayUpdate(averageAmp());
+  displayUpdate(averageAmp()-AmpOffset);
 
   if(digitalRead(ONBOARD_BUTTON)==LOW){
-    AmpOffset = readAmp();
+    AmpOffset = averageAmp();
   }
 
 }
