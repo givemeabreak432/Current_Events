@@ -22,8 +22,8 @@ static double AmpOffset = 0.0;
 String data;
 
 // Initialize required variables for internet connection.
-const char* ssid = "Change Your Admin Creds";
-const char* password = "thistest";
+const char* ssid = "";
+const char* password = "";
 
 IPAddress server(52,41,6,176);
 
@@ -83,7 +83,7 @@ static void sendData(double holder_param) {
   data = "current=" + (String)holder_param;
 
   if (client.connect(server, 80)) {
-    client.println("POST /post-data.php HTTP/1.1");
+    client.println("POST /index.php HTTP/1.1");
     client.print("Host: ");
     client.print(server);
     client.println();
