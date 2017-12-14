@@ -40,10 +40,10 @@ Adafruit_MCP3008 adc;
 String data;
 
 // Initialize required variables for internet connection.
-const char* ssid = "Pascal's Village";
-const char* password = "fancypotato574";
+const char* ssid = "Change Your Admin Creds";
+const char* password = "thistest";
 
-IPAddress server(192,168,1,17);
+IPAddress server(172,20,10,12);
 
 WiFiClient client;
 
@@ -74,7 +74,7 @@ inline static double averageAmp(ACS712_Sensor *sensor){
 static void displayUpdate(double newAmp){
   display.clear();
   display.setFont(ArialMT_Plain_16);
-  display.setLogBuffer(2, 15);
+  display.setLogBuffer(1, 15);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.print("Amps : ");
   display.println(newAmp);
@@ -92,16 +92,16 @@ static void startWifi(){
     delay(500);
     Serial.println("Connecting to WiFi..");
   }
-
+  //Serial.println(WiFi.IPAddress());
   Serial.println("Connected to the WiFi network");
 }
 
 // Takes array of tuples and sends them to server
 static void sendData() {
-  data = "{'data': [";
+  data = "{data: [";
   for(int i = 0; i < NUMBER_OF_BATCHES; i++)
   {
-    data += "{'";
+    data += "{\"datetime\": \"";
     data += (int)batch_buffer[i].time_stamp.month;
     data += "/";
     data += (int)batch_buffer[i].time_stamp.dayOfMonth;
@@ -113,11 +113,8 @@ static void sendData() {
     data += (int)batch_buffer[i].time_stamp.minute;
     data += ":";
     data += (int)batch_buffer[i].time_stamp.second;
-    data += "'";
-    data += ":";
-    data += "'";
+    data += "\", \"current_value\": ";
     data += batch_buffer[i].avg_current;
-    data += "'";
     data += "}";
     if (i < NUMBER_OF_BATCHES - 1)
     {
@@ -125,6 +122,7 @@ static void sendData() {
     }
   }
   data += "]}";
+  Serial.println(data);
   //{data: [{time : current}...]}
 
   if (client.connect(server, 8000)) {
@@ -230,7 +228,7 @@ void setup() {
   pinMode(ONBOARD_BUTTON, INPUT);
   pinMode(READPIN, INPUT);
 
-  setDS3231time(0,40,3,5,12,14,17);
+  //setDS3231time(0,41,10,5,15,12,17);
 }
 
 void loop()
