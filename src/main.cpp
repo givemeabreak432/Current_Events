@@ -8,9 +8,23 @@
 #include <WiFi.h>
 
 #include "main.h"
+#define NUMBER_OF_BATCHES 60
+typedef struct {
+  byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+} time_sensor;
+
+typedef struct {
+  time_sensor time_stamp;
+  double avg_current;
+} batch_unit;
+
+
 
 //variables read / derived from currenst sensor
+static time_sensor global_time_sensor;
 static ACS712_Sensor global_sensor; //global struct to store sensor data
+static batch_unit batch_buffer[NUMBER_OF_BATCHES]; //buffer for readings
+static uint32_t batch_index = 0;
 
 //TODO Scope variables better
 #define READPIN 32
@@ -24,10 +38,10 @@ static double AmpOffset = 0.0;
 String data;
 
 // Initialize required variables for internet connection.
-const char* ssid = "";
-const char* password = "";
+const char* ssid = "Pascal's Village";
+const char* password = "fancypotato574";
 
-IPAddress server(52,41,6,176);
+IPAddress server(192,168,1,17);
 
 WiFiClient client;
 
@@ -80,16 +94,42 @@ static void startWifi(){
 }
 
 // Takes array of tuples and sends them to server
-static void sendData(double holder_param) {
-
-  data = "current=" + (String)holder_param;
+static void sendData() {
+  data = "{'data': [";
+  for(int i = 0; i < NUMBER_OF_BATCHES; i++)
+  {
+    data += "{'";
+    data += (int)batch_buffer[i].time_stamp.month;
+    data += "/";
+    data += (int)batch_buffer[i].time_stamp.dayOfMonth;
+    data += "/";
+    data += (int)batch_buffer[i].time_stamp.year;
+    data += " ";
+    data += (int)batch_buffer[i].time_stamp.hour;
+    data += ":";
+    data += (int)batch_buffer[i].time_stamp.minute;
+    data += ":";
+    data += (int)batch_buffer[i].time_stamp.second;
+    data += "'";
+    data += ":";
+    data += "'";
+    data += (int)batch_buffer[i].avg_current;
+    data += "'";
+    data += "}";
+    if (i < NUMBER_OF_BATCHES - 1)
+    {
+      data += ",";
+    }
+  }
+  data += "]}";
+  //{data: [{time : current}...]}
 
   if (client.connect(server, 80)) {
-    client.println("POST /index.php HTTP/1.1");
+    client.println("POST / HTTP/1.1");
     client.print("Host: ");
     client.print(server);
     client.println();
-    client.println("Content-Type: application/x-www-form-urlencoded");
+    client.println("Content-Type: application/json");
     client.print("Content-Length: ");
     client.print(data.length());
     client.println();
@@ -133,7 +173,7 @@ void setup() {
   Serial.begin(115200);
   while(!Serial);
 
-  //startWifi();
+  startWifi();
 
   display.init();
   display.flipScreenVertically();
@@ -141,7 +181,7 @@ void setup() {
   pinMode(ONBOARD_BUTTON, INPUT);
   pinMode(READPIN, INPUT);
 
-  setDS3231time(0,35,20,3,12,12,17);
+  //setDS3231time(0,35,20,3,12,12,17);
 }
 
 void readDS3231time(byte *second,
@@ -164,6 +204,28 @@ byte *year)
   *dayOfMonth = bcdToDec(Wire.read());
   *month = bcdToDec(Wire.read());
   *year = bcdToDec(Wire.read());
+}
+
+
+
+void add_to_batch_buffer_and_send(double current)
+{
+  batch_buffer[batch_index].avg_current = current;
+
+  batch_buffer[batch_index].time_stamp.second = global_time_sensor.second;
+  batch_buffer[batch_index].time_stamp.minute = global_time_sensor.minute;
+  batch_buffer[batch_index].time_stamp.hour = global_time_sensor.hour;
+  batch_buffer[batch_index].time_stamp.dayOfWeek = global_time_sensor.dayOfWeek;
+  batch_buffer[batch_index].time_stamp.dayOfMonth = global_time_sensor.dayOfMonth;
+  batch_buffer[batch_index].time_stamp.month = global_time_sensor.month;
+  batch_buffer[batch_index].time_stamp.year = global_time_sensor.year;
+  batch_index++;
+  if (batch_index == NUMBER_OF_BATCHES)
+  {
+    batch_index = 0;
+    sendData();
+  }
+
 }
 void displayTime()
 {
@@ -224,12 +286,23 @@ void loop()
   //delays are built into averageAmp()
   double aveAmp = averageAmp(&global_sensor);
   displayUpdate(aveAmp - AmpOffset);
-  sendData(aveAmp- AmpOffset);
+
 
   if(digitalRead(ONBOARD_BUTTON)==LOW){
     AmpOffset = averageAmp(&global_sensor);
   }
+  readDS3231time(&global_time_sensor.second, &global_time_sensor.minute,
+    &global_time_sensor.hour, &global_time_sensor.dayOfWeek,
+    &global_time_sensor.dayOfMonth, &global_time_sensor.month,
+    &global_time_sensor.year);
+    delay(1000);
 
-  displayTime(); // display the real-time clock data on the Serial Monitor,
+    add_to_batch_buffer_and_send(aveAmp - AmpOffset);
+
+
+
+
+
+  //displayTime(); // display the real-time clock data on the Serial Monitor,
 
 }
