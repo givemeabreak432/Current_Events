@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+//#define USE_EXTERNAL_ADC 1 //if this value is defined the ESP32 will use the MCP3008 instead of the internal ADC
 // ea5ntxzgrugmi5
 #include <Wire.h>  // Only needed for Arduino 1.6.5 and earlier
 #include <SSD1306.h> // alias for `#include "SSD1306Wire.h"`
@@ -52,11 +53,17 @@ SSD1306  display(0x3c, 21, 22);
 
 //translates the raw value into a Amp reading.
 inline static void readSensor(ACS712_Sensor *sensor){
+  #if defined(USE_EXTERNAL_ADC)
+  sensor->rawRead = adc.readADC(0);
+  //TODO: 380 is a magic number that is roughly the value read with 0 current
+  sensor->voltageRead = sensor->rawRead / (380/ACS_OFFSET);
+
+  #else
   sensor->rawRead = analogRead(READPIN);
   //TODO: 3050 is a magic number that is roughly the value read with 0 current
   sensor->voltageRead = sensor->rawRead / (3050/ACS_OFFSET);
-  //sensor->ampsRead = ((sensor->voltageRead - ACS_OFFSET))/V_PER_AMP;
-  //TODO: Test averaging voltage as well
+
+  #endif
 }
 
 inline static double averageAmp(ACS712_Sensor *sensor){
@@ -229,12 +236,13 @@ void setup() {
   pinMode(READPIN, INPUT);
 
   //setDS3231time(0,41,10,5,15,12,17);
+  //bool Adafruit_MCP3008::begin(uint8_t sck, uint8_t mosi, uint8_t miso, uint8_t cs)
+  adc.begin(18,19,23,2);
 }
 
 void loop()
 {
 
-  //delays are built into averageAmp()
   double aveAmp = averageAmp(&global_sensor);
   displayUpdate(aveAmp - AmpOffset);
 
