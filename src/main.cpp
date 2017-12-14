@@ -8,7 +8,7 @@
 #include <WiFi.h>
 
 #include "main.h"
-#define NUMBER_OF_BATCHES 60
+#define NUMBER_OF_BATCHES 50
 typedef struct {
   byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
 } time_sensor;
@@ -113,7 +113,7 @@ static void sendData() {
     data += "'";
     data += ":";
     data += "'";
-    data += (int)batch_buffer[i].avg_current;
+    data += batch_buffer[i].avg_current;
     data += "'";
     data += "}";
     if (i < NUMBER_OF_BATCHES - 1)
@@ -123,6 +123,8 @@ static void sendData() {
   }
   data += "]}";
   //{data: [{time : current}...]}
+
+  Serial.println((String)data.length());
 
   if (client.connect(server, 80)) {
     client.println("POST / HTTP/1.1");
