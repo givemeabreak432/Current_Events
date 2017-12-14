@@ -18,8 +18,6 @@ typedef struct {
   double avg_current;
 } batch_unit;
 
-
-
 //variables read / derived from currenst sensor
 static time_sensor global_time_sensor;
 static ACS712_Sensor global_sensor; //global struct to store sensor data
@@ -42,6 +40,7 @@ const char* ssid = "Pascal's Village";
 const char* password = "fancypotato574";
 
 IPAddress server(192,168,1,17);
+IPAddress ntp_server();
 
 WiFiClient client;
 
@@ -170,22 +169,6 @@ dayOfMonth, byte month, byte year)
   Wire.endTransmission();
 }
 
-void setup() {
-
-  Serial.begin(115200);
-  while(!Serial);
-
-  startWifi();
-
-  display.init();
-  display.flipScreenVertically();
-
-  pinMode(ONBOARD_BUTTON, INPUT);
-  pinMode(READPIN, INPUT);
-
-  //setDS3231time(0,35,20,3,12,12,17);
-}
-
 void readDS3231time(byte *second,
 byte *minute,
 byte *hour,
@@ -208,8 +191,6 @@ byte *year)
   *year = bcdToDec(Wire.read());
 }
 
-
-
 void add_to_batch_buffer_and_send(double current)
 {
   batch_buffer[batch_index].avg_current = current;
@@ -227,8 +208,8 @@ void add_to_batch_buffer_and_send(double current)
     batch_index = 0;
     sendData();
   }
-
 }
+
 void displayTime()
 {
   byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
@@ -282,6 +263,22 @@ void displayTime()
   }
 }
 
+void setup() {
+
+  Serial.begin(115200);
+  while(!Serial);
+
+  startWifi();
+
+  display.init();
+  display.flipScreenVertically();
+
+  pinMode(ONBOARD_BUTTON, INPUT);
+  pinMode(READPIN, INPUT);
+
+  //setDS3231time(0,35,20,3,12,12,17);
+}
+
 void loop()
 {
 
@@ -300,11 +297,5 @@ void loop()
     delay(1000);
 
     add_to_batch_buffer_and_send(aveAmp - AmpOffset);
-
-
-
-
-
   //displayTime(); // display the real-time clock data on the Serial Monitor,
-
 }
