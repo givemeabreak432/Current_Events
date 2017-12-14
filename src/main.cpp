@@ -231,6 +231,5 @@ void loop()
   }
 
   displayTime(); // display the real-time clock data on the Serial Monitor,
-  delay(1000); // every second
 
 }
