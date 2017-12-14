@@ -5,10 +5,12 @@
 #include <Wire.h>  // Only needed for Arduino 1.6.5 and earlier
 #include <SSD1306.h> // alias for `#include "SSD1306Wire.h"`
 
+#include <Adafruit_MCP3008.h>
+
 #include <WiFi.h>
 
 #include "main.h"
-#define NUMBER_OF_BATCHES 50
+#define NUMBER_OF_BATCHES 20
 typedef struct {
   byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
 } time_sensor;
@@ -33,6 +35,8 @@ static uint32_t batch_index = 0;
 
 static double AmpOffset = 0.0;
 
+Adafruit_MCP3008 adc;
+
 String data;
 
 // Initialize required variables for internet connection.
@@ -40,7 +44,6 @@ const char* ssid = "Pascal's Village";
 const char* password = "fancypotato574";
 
 IPAddress server(192,168,1,17);
-IPAddress ntp_server();
 
 WiFiClient client;
 
@@ -64,7 +67,6 @@ inline static double averageAmp(ACS712_Sensor *sensor){
     averageAmp = (((averageAmp * AMP_READS_BETWEEN_UPDATE) + (sensor->voltageRead - ACS_OFFSET) / V_PER_AMP) / (AMP_READS_BETWEEN_UPDATE + 1));
   }
 
-
   return averageAmp;
 }
 
@@ -80,6 +82,8 @@ static void displayUpdate(double newAmp){
   display.drawLogBuffer(0, 0);
   display.display();
 }
+
+
 
 static void startWifi(){
   WiFi.begin(ssid, password);
@@ -123,10 +127,8 @@ static void sendData() {
   data += "]}";
   //{data: [{time : current}...]}
 
-  Serial.println((String)data.length());
-
-  if (client.connect(server, 80)) {
-    client.println("POST / HTTP/1.1");
+  if (client.connect(server, 8000)) {
+    client.println("POST /datalog/ HTTP/1.1");
     client.print("Host: ");
     client.print(server);
     client.println();
@@ -263,6 +265,10 @@ void displayTime()
   }
 }
 
+// void adc_init() {
+//   adc = new Adafruit_MCP3008
+// }
+
 void setup() {
 
   Serial.begin(115200);
@@ -276,7 +282,7 @@ void setup() {
   pinMode(ONBOARD_BUTTON, INPUT);
   pinMode(READPIN, INPUT);
 
-  //setDS3231time(0,35,20,3,12,12,17);
+  setDS3231time(0,40,3,5,12,14,17);
 }
 
 void loop()
@@ -286,10 +292,10 @@ void loop()
   double aveAmp = averageAmp(&global_sensor);
   displayUpdate(aveAmp - AmpOffset);
 
-
   if(digitalRead(ONBOARD_BUTTON)==LOW){
     AmpOffset = averageAmp(&global_sensor);
   }
+
   readDS3231time(&global_time_sensor.second, &global_time_sensor.minute,
     &global_time_sensor.hour, &global_time_sensor.dayOfWeek,
     &global_time_sensor.dayOfMonth, &global_time_sensor.month,
